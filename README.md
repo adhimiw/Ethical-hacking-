@@ -127,6 +127,9 @@ Open:
 ### Unlock
 ![Unlock](docs/screenshots/06-unlock.png)
 
+You can also download all screenshots as a bundle:
+- `docs/screenshots_bundle.zip`
+
 ## Documentation
 
 Complete end-to-end technical documentation is available in:
