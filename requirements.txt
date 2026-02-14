@@ -1,0 +1,4 @@
+Flask==2.0.1
+Flask-Limiter==2.4.0
+Flask-ReCaptcha==0.1.0
+sqlite3
