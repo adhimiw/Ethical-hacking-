@@ -34,10 +34,10 @@
         const loginAttemptsChart = new Chart(loginAttemptsCtx, {
             type: 'bar',
             data: {
-                labels: {{ login_attempts|map(attribute='email')|list|tojson|safe }},
+                labels: {{ login_labels|tojson|safe }},
                 datasets: [{
                     label: 'Attempts',
-                    data: {{ login_attempts|map(attribute='attempts')|list|tojson|safe }},
+                    data: {{ login_counts|tojson|safe }},
                     backgroundColor: 'rgba(54, 162, 235, 0.5)',
                     borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1
@@ -60,8 +60,8 @@
                 labels: ['Locked', 'Unlocked'],
                 datasets: [{
                     data: [
-                        {{ account_locks|selectattr('locked', 'equalto', 1)|list|length }},
-                        {{ account_locks|selectattr('locked', 'equalto', 0)|list|length }}
+                        {{ locked_count }},
+                        {{ unlocked_count }}
                     ],
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.5)',
@@ -81,9 +81,9 @@
         const otpStatusChart = new Chart(otpStatusCtx, {
             type: 'doughnut',
             data: {
-                labels: {{ otp_data|map(attribute='email')|list|tojson|safe }},
+                labels: {{ otp_labels|tojson|safe }},
                 datasets: [{
-                    data: {{ otp_data|map(attribute='otps_sent')|list|tojson|safe }},
+                    data: {{ otp_counts|tojson|safe }},
                     backgroundColor: [
                         'rgba(255, 206, 86, 0.5)',
                         'rgba(75, 192, 192, 0.5)',
