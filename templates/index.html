@@ -4,24 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ethical Hacking Login Module</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="text-center">Ethical Hacking Login Module</h1>
-        <div class="row mt-5">
-            <div class="col-md-6 offset-md-3">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Welcome!</h5>
-                        <p class="card-text">
-                            <a href="/register" class="btn btn-primary">Register</a>
-                            <a href="/login" class="btn btn-success">Login</a>
-                        </p>
-                    </div>
+    <main class="app-shell">
+        <div class="auth-layout">
+            <section class="panel hero-card">
+                <h1 class="brand">
+                    Ethical Hacking Login Module
+                    <small>Anti-Gravity Security Interface</small>
+                </h1>
+                <p>
+                    Built for secure auth research: email verification, OTP, account lock controls,
+                    and rate limiting. Minimal friction, maximum signal.
+                </p>
+                <div class="security-list">
+                    <span>Email Verification</span>
+                    <span>OTP / 2FA Authentication</span>
+                    <span>Brute-force Lock Protection</span>
+                    <span>Live Security Dashboard</span>
                 </div>
-            </div>
+            </section>
+
+            <section class="panel">
+                <h2 class="form-title">Get Started</h2>
+                <p style="color: var(--muted); margin-top: 0; margin-bottom: 16px;">
+                    Create a secure account or continue your authorized test session.
+                </p>
+                <div class="btn-row">
+                    <a href="/register" class="btn btn-primary">Create Account</a>
+                    <a href="/login" class="btn btn-dark">Sign In</a>
+                </div>
+            </section>
         </div>
-    </div>
+    </main>
 </body>
 </html>

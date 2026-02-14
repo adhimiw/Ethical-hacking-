@@ -3,102 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Security Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="text-center">Dashboard</h1>
-        <div class="row mt-5">
-            <div class="col-md-6">
-                <h3>Login Attempts</h3>
-                <canvas id="loginAttemptsChart" width="400" height="300"></canvas>
+    <main class="app-shell">
+        <section class="panel">
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="brand" style="margin: 0;">Security Analytics
+                        <small>Live Auth Telemetry</small>
+                    </h1>
+                </div>
+                <div class="btn-row">
+                    <a href="/" class="btn btn-dark">Home</a>
+                    <a href="/login" class="btn btn-dark">Re-authenticate</a>
+                </div>
             </div>
-            <div class="col-md-6">
-                <h3>Account Locks</h3>
-                <canvas id="accountLocksChart" width="400" height="300"></canvas>
+
+            {% set total_users = login_labels|length %}
+            {% set total_otps = otp_counts|sum %}
+            {% set total_locks = locked_count %}
+
+            <div class="kpi-grid">
+                <div class="kpi">
+                    <small>Tracked Users</small>
+                    <strong>{{ total_users }}</strong>
+                </div>
+                <div class="kpi">
+                    <small>OTPs Issued</small>
+                    <strong>{{ total_otps }}</strong>
+                </div>
+                <div class="kpi">
+                    <small>Locked Accounts</small>
+                    <strong>{{ total_locks }}</strong>
+                </div>
             </div>
-        </div>
-        <div class="row mt-5">
-            <div class="col-md-6">
-                <h3>OTP Status</h3>
-                <canvas id="otpStatusChart" width="400" height="300"></canvas>
+
+            <div class="chart-grid">
+                <article class="chart-card">
+                    <h3>Login Attempt Distribution</h3>
+                    <canvas id="loginAttemptsChart"></canvas>
+                </article>
+
+                <article class="chart-card">
+                    <h3>Account Lock Status</h3>
+                    <canvas id="accountLocksChart"></canvas>
+                </article>
+
+                <article class="chart-card" style="grid-column: 1 / -1;">
+                    <h3>OTP Activity by Account</h3>
+                    <canvas id="otpStatusChart"></canvas>
+                </article>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <script>
-        // Login Attempts Chart
-        const loginAttemptsCtx = document.getElementById('loginAttemptsChart').getContext('2d');
-        const loginAttemptsChart = new Chart(loginAttemptsCtx, {
+        const loginLabels = {{ login_labels|tojson|safe }};
+        const loginCounts = {{ login_counts|tojson|safe }};
+        const otpLabels = {{ otp_labels|tojson|safe }};
+        const otpCounts = {{ otp_counts|tojson|safe }};
+
+        const chartDefaults = {
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#d6e2ff',
+                        font: { family: 'Sora' }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#c2d2ff' },
+                    grid: { color: 'rgba(168,188,255,0.14)' }
+                },
+                y: {
+                    ticks: { color: '#c2d2ff' },
+                    grid: { color: 'rgba(168,188,255,0.14)' },
+                    beginAtZero: true
+                }
+            }
+        };
+
+        new Chart(document.getElementById('loginAttemptsChart'), {
             type: 'bar',
             data: {
-                labels: {{ login_labels|tojson|safe }},
+                labels: loginLabels,
                 datasets: [{
                     label: 'Attempts',
-                    data: {{ login_counts|tojson|safe }},
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
+                    data: loginCounts,
+                    borderRadius: 9,
+                    backgroundColor: 'rgba(110, 231, 255, 0.55)',
+                    borderColor: 'rgba(110, 231, 255, 0.95)',
+                    borderWidth: 1.2
+                }]
+            },
+            options: chartDefaults
+        });
+
+        new Chart(document.getElementById('accountLocksChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Locked', 'Unlocked'],
+                datasets: [{
+                    data: [{{ locked_count }}, {{ unlocked_count }}],
+                    backgroundColor: ['rgba(255, 111, 145, 0.75)', 'rgba(68, 228, 169, 0.72)'],
+                    borderColor: ['rgba(255, 111, 145, 1)', 'rgba(68, 228, 169, 1)'],
+                    borderWidth: 1.1
                 }]
             },
             options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#d6e2ff',
+                            font: { family: 'Sora' }
+                        }
                     }
                 }
             }
         });
 
-        // Account Locks Chart
-        const accountLocksCtx = document.getElementById('accountLocksChart').getContext('2d');
-        const accountLocksChart = new Chart(accountLocksCtx, {
-            type: 'pie',
+        new Chart(document.getElementById('otpStatusChart'), {
+            type: 'line',
             data: {
-                labels: ['Locked', 'Unlocked'],
+                labels: otpLabels,
                 datasets: [{
-                    data: [
-                        {{ locked_count }},
-                        {{ unlocked_count }}
-                    ],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.5)',
-                        'rgba(75, 192, 192, 0.5)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(75, 192, 192, 1)'
-                    ],
-                    borderWidth: 1
+                    label: 'OTPs Sent',
+                    data: otpCounts,
+                    fill: true,
+                    tension: 0.32,
+                    borderColor: 'rgba(124, 131, 255, 1)',
+                    backgroundColor: 'rgba(124, 131, 255, 0.24)',
+                    pointBackgroundColor: 'rgba(110, 231, 255, 1)',
+                    pointRadius: 4
                 }]
-            }
-        });
-
-        // OTP Status Chart
-        const otpStatusCtx = document.getElementById('otpStatusChart').getContext('2d');
-        const otpStatusChart = new Chart(otpStatusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: {{ otp_labels|tojson|safe }},
-                datasets: [{
-                    data: {{ otp_counts|tojson|safe }},
-                    backgroundColor: [
-                        'rgba(255, 206, 86, 0.5)',
-                        'rgba(75, 192, 192, 0.5)',
-                        'rgba(153, 102, 255, 0.5)',
-                        'rgba(255, 159, 64, 0.5)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            }
+            },
+            options: chartDefaults
         });
     </script>
 </body>

@@ -4,22 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify Unlock OTP</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="text-center">Verify Unlock OTP</h1>
-        <div class="row mt-5">
-            <div class="col-md-6 offset-md-3">
-                <form method="POST" action="/verify_unlock_otp">
-                    <div class="form-group">
-                        <label for="otp">OTP</label>
-                        <input type="text" class="form-control" id="otp" name="otp" required>
+    <main class="app-shell" style="max-width: 620px;">
+        <section class="panel">
+            <h1 class="brand" style="font-size: clamp(1.7rem, 3.2vw, 2.4rem); margin-top: 0;">Confirm Unlock OTP
+                <small>Reset lock state and restore login</small>
+            </h1>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="alerts">
+                        {% for message in messages %}
+                            <div class="alert">{{ message }}</div>
+                        {% endfor %}
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Verify</button>
-                </form>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="/verify_unlock_otp">
+                <div>
+                    <label for="otp">Unlock OTP</label>
+                    <input type="text" id="otp" name="otp" maxlength="6" autocomplete="one-time-code" required>
+                </div>
+
+                <button type="submit">Unlock Account</button>
+            </form>
+
+            <div class="btn-row" style="margin-top: 14px;">
+                <a href="/unlock" class="link-subtle">Request a new unlock OTP</a>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 </body>
 </html>
