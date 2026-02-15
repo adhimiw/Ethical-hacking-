@@ -7,36 +7,100 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <main class="app-shell">
-        <div class="auth-layout">
+    <main class="app-shell" style="max-width: 1100px;">
+        <div class="auth-layout" style="grid-template-columns: 1fr 1fr;">
             <section class="panel hero-card">
                 <h1 class="brand">
                     Ethical Hacking Login Module
                     <small>Anti-Gravity Security Interface</small>
                 </h1>
                 <p>
-                    Built for secure auth research: email verification, OTP, account lock controls,
-                    and rate limiting. Minimal friction, maximum signal.
+                    A comprehensive authentication framework designed to demonstrate 
+                    modern defense-in-depth strategies against automated attacks.
                 </p>
                 <div class="security-list">
-                    <span>Email Verification</span>
-                    <span>OTP / 2FA Authentication</span>
-                    <span>Brute-force Lock Protection</span>
-                    <span>Live Security Dashboard</span>
+                    <span>Multi-Layer Protection</span>
+                    <span>User Intent Verification</span>
+                    <span>Real-time Attack Telemetry</span>
                 </div>
             </section>
 
             <section class="panel">
                 <h2 class="form-title">Get Started</h2>
-                <p style="color: var(--muted); margin-top: 0; margin-bottom: 16px;">
-                    Create a secure account or continue your authorized test session.
+                <p style="color: var(--muted); margin-top: 0; margin-bottom: 24px;">
+                    Experience the secure authentication flow first-hand.
                 </p>
                 <div class="btn-row">
-                    <a href="/register" class="btn btn-primary">Create Account</a>
-                    <a href="/login" class="btn btn-dark">Sign In</a>
+                    <a href="/register" class="btn btn-primary" style="flex: 1;">Create Account</a>
+                    <a href="/login" class="btn btn-dark" style="flex: 1;">Sign In</a>
                 </div>
             </section>
         </div>
+
+        <div class="section-divider"></div>
+
+        <section class="panel">
+            <h2 class="form-title">Defense Mechanisms: How It Works</h2>
+            <p style="color: var(--muted); margin-bottom: 30px;">
+                This module implements five critical security layers to prevent unauthorized access.
+            </p>
+
+            <div class="explanation-grid">
+                <article class="explanation-card">
+                    <h3>🛡️ reCAPTCHA</h3>
+                    <p>
+                        <strong>Bot Prevention:</strong> Challenges users to prove they are human. 
+                        It prevents "Credential Stuffing" where attackers use scripts to try 
+                        thousands of stolen password combinations automatically.
+                    </p>
+                </article>
+
+                <article class="explanation-card">
+                    <h3>📧 Email Verification</h3>
+                    <p>
+                        <strong>Identity Trust:</strong> Ensures the registrant owns the email 
+                        provided. By requiring a click on a unique, server-generated link, 
+                        we prevent the creation of bulk fake accounts or "Spambot" registrations.
+                    </p>
+                </article>
+
+                <article class="explanation-card">
+                    <h3>🔐 OTP (2-Factor)</h3>
+                    <p>
+                        <strong>Secondary Defense:</strong> Even if a password is stolen, the system 
+                        requires a 6-digit One-Time Password sent to the verified email. This 
+                        ensures the attacker needs both the password AND access to the user's inbox.
+                    </p>
+                </article>
+
+                <article class="explanation-card">
+                    <h3>🚫 Account Locking</h3>
+                    <p>
+                        <strong>Brute-Force Shield:</strong> After 5 consecutive failed login 
+                        attempts, the system automatically locks the account. This renders rapid 
+                        password guessing ineffective, forcing a manual unlock via email.
+                    </p>
+                </article>
+
+                <article class="explanation-card">
+                    <h3>⏳ Hold-to-Submit</h3>
+                    <p>
+                        <strong>Interaction Delay:</strong> Requires a 1.5s hold-press to submit 
+                        forms. This verifies "User Intent" and blocks simple automation scripts 
+                        that can only trigger instant click events but cannot simulate long-presses.
+                    </p>
+                </article>
+
+                <article class="explanation-card">
+                    <h3>📊 Live Analytics</h3>
+                    <p>
+                        <strong>Intrusion Detection:</strong> Every success and failure is logged 
+                        by IP address and visualized on the dashboard. This allows administrators 
+                        to spot attack patterns (like a burst of failures) in real-time.
+                    </p>
+                </article>
+            </div>
+        </section>
     </main>
 </body>
 </html>
