@@ -24,13 +24,52 @@
             {% endwith %}
 
             <form method="POST" action="/verify_otp">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div>
                     <label for="otp">Enter OTP</label>
                     <input type="text" id="otp" name="otp" maxlength="6" autocomplete="one-time-code" required>
                 </div>
 
-                <button type="submit">Verify and Enter Dashboard</button>
+                <button type="submit" id="submit-btn" class="btn-hold-press">
+                    <span class="progress-fill"></span>
+                    <span class="btn-text">Hold to Verify</span>
+                </button>
             </form>
+
+            <script>
+                const btn = document.getElementById('submit-btn');
+                const form = btn.closest('form');
+                const progress = btn.querySelector('.progress-fill');
+                const holdTime = 1500;
+                let timer;
+                let startTime;
+
+                function startHold(e) {
+                    e.preventDefault();
+                    btn.classList.add('holding');
+                    startTime = Date.now();
+                    timer = setInterval(() => {
+                        const elapsed = Date.now() - startTime;
+                        const percent = Math.min((elapsed / holdTime) * 100, 100);
+                        progress.style.width = percent + '%';
+                        if (elapsed >= holdTime) {
+                            clearInterval(timer);
+                            form.submit();
+                        }
+                    }, 10);
+                }
+
+                function stopHold() {
+                    btn.classList.remove('holding');
+                    clearInterval(timer);
+                    progress.style.width = '0%';
+                }
+
+                btn.addEventListener('mousedown', startHold);
+                btn.addEventListener('touchstart', startHold);
+                window.addEventListener('mouseup', stopHold);
+                window.addEventListener('touchend', stopHold);
+            </script>
 
             <div class="btn-row" style="margin-top: 14px;">
                 <a href="/login" class="link-subtle">Back to login</a>

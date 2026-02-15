@@ -25,6 +25,7 @@
             {% endwith %}
 
             <form method="POST" action="/unlock">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div>
                     <label for="email">Registered Email</label>
                     <input type="email" id="email" name="email" autocomplete="email" required>
@@ -34,8 +35,46 @@
                     <div class="g-recaptcha" data-sitekey="{{ config['RECAPTCHA_SITE_KEY'] }}"></div>
                 </div>
 
-                <button type="submit">Send Unlock OTP</button>
+                <button type="submit" id="submit-btn" class="btn-hold-press">
+                    <span class="progress-fill"></span>
+                    <span class="btn-text">Hold to Send Unlock OTP</span>
+                </button>
             </form>
+
+            <script>
+                const btn = document.getElementById('submit-btn');
+                const form = btn.closest('form');
+                const progress = btn.querySelector('.progress-fill');
+                const holdTime = 1500;
+                let timer;
+                let startTime;
+
+                function startHold(e) {
+                    e.preventDefault();
+                    btn.classList.add('holding');
+                    startTime = Date.now();
+                    timer = setInterval(() => {
+                        const elapsed = Date.now() - startTime;
+                        const percent = Math.min((elapsed / holdTime) * 100, 100);
+                        progress.style.width = percent + '%';
+                        if (elapsed >= holdTime) {
+                            clearInterval(timer);
+                            form.submit();
+                        }
+                    }, 10);
+                }
+
+                function stopHold() {
+                    btn.classList.remove('holding');
+                    clearInterval(timer);
+                    progress.style.width = '0%';
+                }
+
+                btn.addEventListener('mousedown', startHold);
+                btn.addEventListener('touchstart', startHold);
+                window.addEventListener('mouseup', stopHold);
+                window.addEventListener('touchend', stopHold);
+            </script>
 
             <div class="btn-row" style="margin-top: 14px; justify-content: space-between;">
                 <a href="/login" class="link-subtle">Back to login</a>
