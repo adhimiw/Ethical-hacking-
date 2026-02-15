@@ -56,6 +56,15 @@ def init_db():
         )
     ''')
     c.execute('''
+        CREATE TABLE IF NOT EXISTS login_attempts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            success BOOLEAN NOT NULL,
+            ip_address TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    c.execute('''
         CREATE TABLE IF NOT EXISTS otps (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT NOT NULL,
@@ -173,18 +182,22 @@ def login():
             return redirect(url_for('unlock'))
 
         if user[2] != password:
+            c.execute('INSERT INTO login_attempts (email, success, ip_address) VALUES (?, 0, ?)', (email, get_remote_address()))
             failed_attempts = user[5] + 1
             if failed_attempts >= 5:
                 c.execute('UPDATE users SET locked = 1 WHERE email = ?', (email,))
+                conn.commit()
                 flash('Your account is locked due to too many failed attempts.')
                 return redirect(url_for('unlock'))
             else:
                 c.execute('UPDATE users SET failed_attempts = ?, last_attempt = ? WHERE email = ?', (failed_attempts, datetime.now(), email))
+                conn.commit()
                 flash('Invalid password.')
                 return redirect(url_for('login'))
 
         # Generate and send OTP
         otp = generate_otp()
+        c.execute('INSERT INTO login_attempts (email, success, ip_address) VALUES (?, 1, ?)', (email, get_remote_address()))
         c.execute('INSERT INTO otps (email, otp) VALUES (?, ?)', (email, otp))
         conn.commit()
 
@@ -289,9 +302,13 @@ def dashboard():
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
 
-    # Fetch login attempts data
-    c.execute('SELECT email, COUNT(*) as attempts FROM users GROUP BY email')
+    # Fetch login attempts data (actual history)
+    c.execute('SELECT email, COUNT(*) as attempts FROM login_attempts GROUP BY email')
     login_attempts = c.fetchall()
+
+    # Fetch success vs failure for extra signal
+    c.execute('SELECT success, COUNT(*) FROM login_attempts GROUP BY success')
+    success_failure = dict(c.fetchall())
 
     # Fetch account locks data
     c.execute('SELECT email, locked FROM users')
@@ -320,7 +337,9 @@ def dashboard():
         locked_count=locked_count,
         unlocked_count=unlocked_count,
         otp_labels=otp_labels,
-        otp_counts=otp_counts
+        otp_counts=otp_counts,
+        success_count=success_failure.get(1, 0),
+        failure_count=success_failure.get(0, 0)
     )
 
 # Initialize database
