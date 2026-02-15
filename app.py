@@ -1,3 +1,22 @@
+# Ethical Hacking Login Module (Python/Flask)
+# Features: Email Verification (Signed Tokens), reCAPTCHA, OTP (Expiring), Password Hashing, Rate Limiting, CSRF Protection
+
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_bcrypt import Bcrypt
+from flask_wtf.csrf import CSRFProtect
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
+import smtplib
+from email.mime.text import MIMEText
+import random
+import sqlite3
+import os
+import requests
+from datetime import datetime, timedelta
+from dotenv import load_dotenv
+load_dotenv()
+
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
@@ -430,4 +449,3 @@ init_db()
 if __name__ == '__main__':
     # Toggle debug mode based on DEV_MODE env variable
     app.run(debug=DEV_MODE)
-
