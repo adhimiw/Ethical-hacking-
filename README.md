@@ -4,13 +4,14 @@ A security-focused authentication module built for ethical testing and learning.
 
 ## Highlights
 
-- Email verification before first login
-- reCAPTCHA on sensitive auth forms
-- OTP-based second-factor login
-- Account lock after repeated failed attempts
-- OTP-based account unlock flow
-- Login rate limiting
-- Security analytics dashboard (Chart.js)
+- **Hold-to-Submit Button**: Prevents bot clicks and verifies user intent with a 1.5s long-press interaction.
+- **Email verification** before first login
+- **reCAPTCHA** on sensitive auth forms
+- **OTP-based second-factor** login
+- **Account lock** after 5 failed attempts
+- **OTP-based account unlock** flow
+- **Login rate limiting** (10 per hour)
+- **Security analytics dashboard** (Chart.js)
 - Modern anti-gravity themed UI
 
 ## Tech Stack

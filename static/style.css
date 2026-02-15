@@ -316,6 +316,27 @@ canvas {
   max-height: 290px;
 }
 
+.btn-hold-press {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+.btn-hold-press .progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+}
+
+.btn-hold-press.holding {
+  transform: scale(0.98);
+  filter: brightness(1.1);
+}
+
 @media (max-width: 880px) {
   .auth-layout {
     grid-template-columns: 1fr;

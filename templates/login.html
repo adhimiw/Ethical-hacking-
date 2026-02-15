@@ -48,8 +48,48 @@
                         <div class="g-recaptcha" data-sitekey="{{ config['RECAPTCHA_SITE_KEY'] }}"></div>
                     </div>
 
-                    <button type="submit">Continue to OTP</button>
+                    <button type="submit" id="submit-btn" class="btn-hold-press">
+                        <span class="progress-fill"></span>
+                        <span class="btn-text">Hold to Continue</span>
+                    </button>
                 </form>
+
+                <script>
+                    const btn = document.getElementById('submit-btn');
+                    const form = btn.closest('form');
+                    const progress = btn.querySelector('.progress-fill');
+                    const holdTime = 1500; // 1.5 seconds
+                    let timer;
+                    let startTime;
+
+                    function startHold(e) {
+                        e.preventDefault();
+                        btn.classList.add('holding');
+                        startTime = Date.now();
+                        
+                        timer = setInterval(() => {
+                            const elapsed = Date.now() - startTime;
+                            const percent = Math.min((elapsed / holdTime) * 100, 100);
+                            progress.style.width = percent + '%';
+                            
+                            if (elapsed >= holdTime) {
+                                clearInterval(timer);
+                                form.submit();
+                            }
+                        }, 10);
+                    }
+
+                    function stopHold() {
+                        btn.classList.remove('holding');
+                        clearInterval(timer);
+                        progress.style.width = '0%';
+                    }
+
+                    btn.addEventListener('mousedown', startHold);
+                    btn.addEventListener('touchstart', startHold);
+                    window.addEventListener('mouseup', stopHold);
+                    window.addEventListener('touchend', stopHold);
+                </script>
 
                 <div class="btn-row" style="margin-top: 12px; justify-content: space-between;">
                     <a href="/unlock" class="link-subtle">Account locked?</a>
