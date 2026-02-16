@@ -45,9 +45,11 @@
                         <input type="password" id="password" name="password" autocomplete="current-password" required>
                     </div>
 
+                    {% if not config['DEV_MODE'] %}
                     <div class="recaptcha-wrap">
                         <div class="g-recaptcha" data-sitekey="{{ config['RECAPTCHA_SITE_KEY'] }}"></div>
                     </div>
+                    {% endif %}
 
                     <button type="submit" id="submit-btn" class="btn-hold-press">
                         <span class="progress-fill"></span>

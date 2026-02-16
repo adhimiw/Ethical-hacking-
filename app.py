@@ -37,7 +37,8 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 # Configure reCAPTCHA
 app.config['RECAPTCHA_SITE_KEY'] = os.environ.get('RECAPTCHA_SITE_KEY', 'YOUR_RECAPTCHA_SITE_KEY')
 app.config['RECAPTCHA_SECRET_KEY'] = os.environ.get('RECAPTCHA_SECRET_KEY', 'YOUR_RECAPTCHA_SECRET_KEY')
-DEV_MODE = os.environ.get('DEV_MODE', 'true').lower() == 'true'
+app.config['DEV_MODE'] = os.environ.get('DEV_MODE', 'true').lower() == 'true'
+DEV_MODE = app.config['DEV_MODE']
 
 if not DEV_MODE:
     app.config.update(
