@@ -542,4 +542,5 @@ create_test_user()
 
 if __name__ == '__main__':
     # Toggle debug mode based on DEV_MODE env variable
-    app.run(debug=DEV_MODE)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=DEV_MODE)
