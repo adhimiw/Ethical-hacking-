@@ -487,6 +487,22 @@ def test_otp_flow():
 # Self-initializing database on startup
 init_db()
 
+def create_test_user():
+    """Ensures the demo user exists even after a fresh deploy."""
+    conn = sqlite3.connect(get_db_path())
+    c = conn.cursor()
+    c.execute('SELECT * FROM users WHERE email = ?', ('adhithanraja6@gmail.com',))
+    if not c.fetchone():
+        # Using a fixed password for demo purposes as requested
+        hashed = bcrypt.generate_password_hash('EthicalTest123!').decode('utf-8')
+        c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', 
+                  ('adhithanraja6@gmail.com', hashed, 1))
+        conn.commit()
+        print("✅ Demo user created.")
+    conn.close()
+
+create_test_user()
+
 if __name__ == '__main__':
     # Toggle debug mode based on DEV_MODE env variable
     app.run(debug=DEV_MODE)
