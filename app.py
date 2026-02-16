@@ -471,8 +471,8 @@ def health():
         c = conn.cursor()
         
         # Check users table
-        c.execute('SELECT COUNT(*) FROM users')
-        user_count = c.fetchone()[0]
+        c.execute('SELECT email, verified, locked, failed_attempts FROM users')
+        users = [dict(zip([col[0] for col in c.description], row)) for row in c.fetchall()]
         
         # Check otps table columns
         c.execute('PRAGMA table_info(otps)')
@@ -484,7 +484,7 @@ def health():
             "db_path": db_path,
             "cwd": os.getcwd(),
             "ls": os.listdir(basedir),
-            "users": user_count,
+            "users": users,
             "otps_columns": columns,
             "dev_mode": DEV_MODE
         }
