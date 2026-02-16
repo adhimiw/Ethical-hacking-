@@ -14,6 +14,13 @@ A security-focused authentication module built for ethical testing and learning.
 - **Security analytics dashboard** (Chart.js)
 - Modern anti-gravity themed UI
 
+### Live Demo Security Note
+The reCAPTCHA banner "This reCAPTCHA is for testing purposes only" appears because we are using Google's global testing keys. To remove this for a production deployment:
+1. Go to [reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin).
+2. Create a new "reCAPTCHA v2 (Checkbox)" site.
+3. Add `onrender.com` to the domains list.
+4. Replace the `RECAPTCHA_SITE_KEY` and `RECAPTCHA_SECRET_KEY` in your Render environment variables.
+
 ## Tech Stack
 
 - **Backend:** Python, Flask
