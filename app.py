@@ -452,6 +452,24 @@ def dashboard():
         failure_count=success_failure.get(0, 0)
     )
 
+@app.route('/health')
+def health():
+    """Diagnostic route to check system health on Render."""
+    try:
+        conn = sqlite3.connect(get_db_path())
+        c = conn.cursor()
+        c.execute('SELECT COUNT(*) FROM users')
+        user_count = c.fetchone()[0]
+        conn.close()
+        return {
+            "status": "healthy",
+            "db_path": get_db_path(),
+            "users": user_count,
+            "dev_mode": DEV_MODE
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
+
 @app.route('/logout')
 def logout():
     """Destroys session data."""
