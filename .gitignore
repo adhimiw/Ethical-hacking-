@@ -1,19 +1,6 @@
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Database
-*.db
-
-# Environment
 .env
 venv/
-
-# IDE
-.idea/
-.vscode/
-
-# Logs
+__pycache__/
+*.db
 *.log
+.DS_Store

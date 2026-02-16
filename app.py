@@ -7,6 +7,7 @@ from flask_limiter.util import get_remote_address
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
+from werkzeug.middleware.proxy_fix import ProxyFix
 import smtplib
 from email.mime.text import MIMEText
 import random
@@ -19,6 +20,7 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
 # Security configurations
@@ -65,11 +67,15 @@ limiter = Limiter(
 )
 
 # Database setup
+def get_db_path():
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    return os.path.join(basedir, 'users.db')
+
 def init_db():
     """
     Initializes the SQLite database with tables for Users, Login Logs, and OTPs.
     """
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect(get_db_path())
     c = conn.cursor()
     # User accounts with security flags (verified, locked)
     c.execute('''
@@ -155,7 +161,7 @@ def register():
             flash('reCAPTCHA verification failed.')
             return redirect(url_for('register'))
 
-        conn = sqlite3.connect('users.db')
+        conn = sqlite3.connect(get_db_path())
         c = conn.cursor()
         c.execute('SELECT * FROM users WHERE email = ?', (email,))
         if c.fetchone():
@@ -196,7 +202,7 @@ def verify_email(token):
         flash('The verification link is invalid or has expired.')
         return redirect(url_for('register'))
 
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect(get_db_path())
     c = conn.cursor()
     c.execute('UPDATE users SET verified = 1 WHERE email = ?', (email,))
     conn.commit()
@@ -221,7 +227,7 @@ def login():
             flash('reCAPTCHA verification failed.')
             return redirect(url_for('login'))
 
-        conn = sqlite3.connect('users.db')
+        conn = sqlite3.connect(get_db_path())
         c = conn.cursor()
         c.execute('SELECT * FROM users WHERE email = ?', (email,))
         user = c.fetchone()
@@ -292,7 +298,7 @@ def verify_otp():
         otp = request.form['otp']
         email = session['temp_email']
 
-        conn = sqlite3.connect('users.db')
+        conn = sqlite3.connect(get_db_path())
         c = conn.cursor()
         
         # Security Policy: OTP must be unused and less than 5 minutes old
@@ -334,7 +340,7 @@ def unlock():
             flash('reCAPTCHA verification failed.')
             return redirect(url_for('unlock'))
 
-        conn = sqlite3.connect('users.db')
+        conn = sqlite3.connect(get_db_path())
         c = conn.cursor()
         c.execute('SELECT * FROM users WHERE email = ?', (email,))
         user = c.fetchone()
@@ -370,7 +376,7 @@ def verify_unlock_otp():
         otp = request.form['otp']
         email = session['unlock_email']
 
-        conn = sqlite3.connect('users.db')
+        conn = sqlite3.connect(get_db_path())
         c = conn.cursor()
         
         five_mins_ago = (datetime.now() - timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S')
@@ -404,7 +410,7 @@ def dashboard():
     if 'logged_in' not in session:
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect(get_db_path())
     c = conn.cursor()
 
     # Telemetry: Success vs Fail for intruder analysis
@@ -442,6 +448,41 @@ def logout():
     session.clear()
     flash('You have been logged out.')
     return redirect(url_for('home'))
+
+@app.route('/test-otp-flow', methods=['GET', 'POST'])
+def test_otp_flow():
+    """
+    Manual test endpoint to trigger OTP flow for demo purposes.
+    Use this to show the OTP verification without going through full login.
+    """
+    if request.method == 'POST':
+        email = request.form.get('email', 'adhithanraja6@gmail.com')  # Default to known user
+        
+        # Generate and send OTP
+        otp = generate_otp()
+        conn = sqlite3.connect(get_db_path())
+        c = conn.cursor()
+        c.execute('INSERT INTO otps (email, otp) VALUES (?, ?)', (email, otp))
+        conn.commit()
+        conn.close()
+
+        send_email(
+            to=email,
+            subject='Demo OTP Code',
+            body=f'This is your demo OTP: {otp}. Valid for 5 minutes.'
+        )
+        
+        session['temp_email'] = email
+        flash(f'Demo OTP sent to {email}. Code: {otp} (for testing only)')
+        return redirect(url_for('verify_otp'))
+
+    return '''
+    <form method="POST">
+        <h3>Demo OTP Flow</h3>
+        <button type="submit">Generate Demo OTP for adhithanraja6@gmail.com</button>
+    </form>
+    <a href="/">Home</a>
+    '''
 
 # Self-initializing database on startup
 init_db()
