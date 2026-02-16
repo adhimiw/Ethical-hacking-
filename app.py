@@ -46,17 +46,27 @@ if not DEV_MODE:
 
 def verify_recaptcha():
     """
-    Validates the reCAPTCHA response with Google's API to prevent automated bot submissions.
-    This is a core 'Authentication Prevention' mechanism.
+    Validates the reCAPTCHA response. 
+    NOTE: Google's global test keys (starting with 6LeIxAcTAAAAA) 
+    only work on localhost. On other domains, they return success=False.
+    We bypass the check if test keys are used to ensure the demo works on Render.
     """
-    if DEV_MODE:
-        return True
-    response = request.form.get('g-recaptcha-response')
     secret = app.config['RECAPTCHA_SECRET_KEY']
+    
+    # Bypass for Dev Mode or if using Google's Global Test Keys
+    if DEV_MODE or secret == '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe':
+        return True
+        
+    response = request.form.get('g-recaptcha-response')
     if not response: return False
-    # Backend-to-Backend validation
-    res = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'secret': secret, 'response': response})
-    return res.json().get('success', False)
+    
+    try:
+        res = requests.post('https://www.google.com/recaptcha/api/siteverify', 
+                            data={'secret': secret, 'response': response},
+                            timeout=5)
+        return res.json().get('success', False)
+    except Exception:
+        return False
 
 # Configure rate limiting (Prevention against DoS and Brute-force)
 limiter = Limiter(
@@ -488,17 +498,26 @@ def test_otp_flow():
 init_db()
 
 def create_test_user():
-    """Ensures the demo user exists even after a fresh deploy."""
+    """Ensures the demo user exists with a valid Bcrypt hash on every deploy."""
     conn = sqlite3.connect(get_db_path())
     c = conn.cursor()
+    hashed = bcrypt.generate_password_hash('EthicalTest123!').decode('utf-8')
+    
+    # Check if user exists
     c.execute('SELECT * FROM users WHERE email = ?', ('adhithanraja6@gmail.com',))
-    if not c.fetchone():
-        # Using a fixed password for demo purposes as requested
-        hashed = bcrypt.generate_password_hash('EthicalTest123!').decode('utf-8')
+    user = c.fetchone()
+    
+    if not user:
         c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', 
                   ('adhithanraja6@gmail.com', hashed, 1))
-        conn.commit()
         print("✅ Demo user created.")
+    else:
+        # Force update password to ensure it's a valid Bcrypt hash
+        c.execute('UPDATE users SET password = ?, verified = 1 WHERE email = ?', 
+                  (hashed, 'adhithanraja6@gmail.com'))
+        print("✅ Demo user password synchronized.")
+        
+    conn.commit()
     conn.close()
 
 create_test_user()
