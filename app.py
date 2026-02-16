@@ -465,15 +465,27 @@ def dashboard():
 def health():
     """Diagnostic route to check system health on Render."""
     try:
-        conn = sqlite3.connect(get_db_path())
+        basedir = os.path.abspath(os.path.dirname(__file__))
+        db_path = get_db_path()
+        conn = sqlite3.connect(db_path)
         c = conn.cursor()
+        
+        # Check users table
         c.execute('SELECT COUNT(*) FROM users')
         user_count = c.fetchone()[0]
+        
+        # Check otps table columns
+        c.execute('PRAGMA table_info(otps)')
+        columns = [row[1] for row in c.fetchall()]
+        
         conn.close()
         return {
             "status": "healthy",
-            "db_path": get_db_path(),
+            "db_path": db_path,
+            "cwd": os.getcwd(),
+            "ls": os.listdir(basedir),
             "users": user_count,
+            "otps_columns": columns,
             "dev_mode": DEV_MODE
         }
     except Exception as e:
