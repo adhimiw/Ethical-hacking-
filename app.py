@@ -48,14 +48,13 @@ if not DEV_MODE:
 def verify_recaptcha():
     """
     Validates the reCAPTCHA response. 
-    NOTE: Google's global test keys (starting with 6LeIxAcTAAAAA) 
-    only work on localhost. On other domains, they return success=False.
-    We bypass the check if test keys are used to ensure the demo works on Render.
+    NOTE: Google's global test keys only work on localhost.
+    We bypass the check if test keys are detected or if DEV_MODE is on.
     """
-    secret = app.config['RECAPTCHA_SECRET_KEY']
+    secret = app.config.get('RECAPTCHA_SECRET_KEY', '').strip()
     
     # Bypass for Dev Mode or if using Google's Global Test Keys
-    if DEV_MODE or secret == '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe':
+    if app.config.get('DEV_MODE') or secret.startswith('6LeIxAcTAAAA'):
         return True
         
     response = request.form.get('g-recaptcha-response')
