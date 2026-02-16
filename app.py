@@ -119,6 +119,14 @@ def init_db():
             used BOOLEAN DEFAULT 0
         )
     ''')
+    
+    # Migration: Ensure 'used' column exists in 'otps' table
+    try:
+        c.execute('SELECT used FROM otps LIMIT 1')
+    except sqlite3.OperationalError:
+        c.execute('ALTER TABLE otps ADD COLUMN used BOOLEAN DEFAULT 0')
+        print("✅ Migrated otps table: added 'used' column.")
+
     conn.commit()
     conn.close()
 
