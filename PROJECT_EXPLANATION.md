@@ -34,7 +34,7 @@ This document explains the security mechanisms implemented in the **Ethical Hack
 ## 5. "Hold to Submit" Security Button
 - **Functionality**: A physical interaction delay for form submission.
 - **How it works**:
-    - The submit button requires a continuous **1.5-second hold** (mouse click or touch).
+    - The submit button requires a continuous **5-second hold** (mouse click or touch).
     - A visual progress bar fills inside the button during the hold.
     - If the user lets go early, the timer resets and the form is **not** submitted.
 - **Security Goal**: 

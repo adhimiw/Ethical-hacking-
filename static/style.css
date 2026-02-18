@@ -12,6 +12,12 @@
   --danger: #ff6f91;
   --success: #44e4a9;
   --shadow: 0 22px 50px rgba(6, 10, 32, 0.55);
+
+  /* Compatibility aliases used by legacy templates */
+  --brand: var(--accent);
+  --panel-bg: var(--panel);
+  --border-color: var(--panel-border);
+  --text-color: var(--text);
 }
 
 * {
@@ -34,6 +40,24 @@ body {
   display: flex;
   justify-content: center;
   padding: 42px 16px;
+}
+
+h1, h2, h3, h4, h5, h6,
+p, li, td, th, strong, span, small, label {
+  color: inherit;
+}
+
+a {
+  color: var(--accent);
+}
+
+a:hover {
+  color: #9bf0ff;
+}
+
+::placeholder {
+  color: #a7b7e8;
+  opacity: 1;
 }
 
 body::before,
@@ -93,7 +117,8 @@ body::after {
   text-transform: uppercase;
 }
 
-.panel {
+.panel,
+.card {
   background: var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 22px;
@@ -377,6 +402,18 @@ canvas {
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--panel-border), transparent);
   margin: 40px 0;
+}
+
+table {
+  color: var(--text);
+}
+
+th {
+  color: #d7e4ff;
+}
+
+td {
+  color: #c8d7ff;
 }
 
 @media (max-width: 880px) {

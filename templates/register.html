@@ -51,7 +51,7 @@
                     </div>
                     {% endif %}
 
-                    <button type="submit" id="submit-btn" class="btn-hold-press">
+                    <button type="button" id="submit-btn" class="btn-hold-press">
                         <span class="progress-fill"></span>
                         <span class="btn-text">Hold to Register</span>
                     </button>
@@ -61,7 +61,8 @@
                     const btn = document.getElementById('submit-btn');
                     const form = btn.closest('form');
                     const progress = btn.querySelector('.progress-fill');
-                    const holdTime = 1500; // 1.5 seconds
+                    const holdTime = 5000; // 5 seconds
+                    let holdValidated = false;
                     let timer;
                     let startTime;
 
@@ -77,7 +78,8 @@
                             
                             if (elapsed >= holdTime) {
                                 clearInterval(timer);
-                                form.submit();
+                                holdValidated = true;
+                                form.requestSubmit();
                             }
                         }, 10);
                     }
@@ -88,10 +90,20 @@
                         progress.style.width = '0%';
                     }
 
+                    btn.addEventListener('click', (e) => e.preventDefault());
                     btn.addEventListener('mousedown', startHold);
                     btn.addEventListener('touchstart', startHold);
+                    btn.addEventListener('mouseleave', stopHold);
+                    btn.addEventListener('touchcancel', stopHold);
                     window.addEventListener('mouseup', stopHold);
                     window.addEventListener('touchend', stopHold);
+                    form.addEventListener('submit', (e) => {
+                        if (!holdValidated) {
+                            e.preventDefault();
+                            return;
+                        }
+                        holdValidated = false;
+                    });
                 </script>
 
                 <div class="btn-row" style="margin-top: 12px;">

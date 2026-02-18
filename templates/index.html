@@ -8,6 +8,7 @@
 </head>
 <body>
     <main class="app-shell" style="max-width: 1100px;">
+        {% block content %}
         <div class="auth-layout" style="grid-template-columns: 1fr 1fr;">
             <section class="panel hero-card">
                 <h1 class="brand">
@@ -33,6 +34,9 @@
                 <div class="btn-row">
                     <a href="/register" class="btn btn-primary" style="flex: 1;">Create Account</a>
                     <a href="/login" class="btn btn-dark" style="flex: 1;">Sign In</a>
+                </div>
+                <div class="btn-row" style="margin-top: 15px;">
+                    <a href="/explanation" class="btn" style="flex: 1; border: 1px dashed var(--brand); color: var(--brand);">Architecture & Code Flow</a>
                 </div>
             </section>
         </div>
@@ -85,7 +89,7 @@
                 <article class="explanation-card">
                     <h3>⏳ Hold-to-Submit</h3>
                     <p>
-                        <strong>Interaction Delay:</strong> Requires a 1.5s hold-press to submit 
+                        <strong>Interaction Delay:</strong> Requires a 5-second hold-press to submit 
                         forms. This verifies "User Intent" and blocks simple automation scripts 
                         that can only trigger instant click events but cannot simulate long-presses.
                     </p>
@@ -101,6 +105,7 @@
                 </article>
             </div>
         </section>
+        {% endblock %}
     </main>
 </body>
 </html>

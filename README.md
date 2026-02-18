@@ -4,7 +4,7 @@ A security-focused authentication module built for ethical testing and learning.
 
 ## Highlights
 
-- **Hold-to-Submit Button**: Prevents bot clicks and verifies user intent with a 1.5s long-press interaction.
+- **Hold-to-Submit Button**: Prevents bot clicks and verifies user intent with a 5s long-press interaction.
 - **Email verification** before first login
 - **reCAPTCHA** on sensitive auth forms
 - **OTP-based second-factor** login

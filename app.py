@@ -420,6 +420,11 @@ def verify_unlock_otp():
 
     return render_template('verify_unlock_otp.html')
 
+@app.route('/explanation')
+def explanation():
+    """Renders the system architecture and flowchart page."""
+    return render_template('explanation.html')
+
 @app.route('/dashboard')
 def dashboard():
     """
@@ -477,6 +482,9 @@ def health():
         # Check otps table columns
         c.execute('PRAGMA table_info(otps)')
         columns = [row[1] for row in c.fetchall()]
+
+        # Check templates
+        templates = os.listdir(os.path.join(basedir, 'templates'))
         
         conn.close()
         return {
@@ -484,6 +492,7 @@ def health():
             "db_path": db_path,
             "cwd": os.getcwd(),
             "ls": os.listdir(basedir),
+            "templates": templates,
             "users": users,
             "otps_columns": columns,
             "dev_mode": DEV_MODE

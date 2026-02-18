@@ -1,0 +1,152 @@
+{% extends "index.html" %}
+
+{% block content %}
+<section class="panel explanation-page">
+    <header class="explain-header">
+        <h2 class="form-title">Project Explanation</h2>
+        <p>
+            This page explains how the authentication module works in the project itself:
+            architecture, route flow, data model, and security controls.
+        </p>
+    </header>
+
+    <div class="stack-3d">
+        <article class="lift-card">
+            <h3>Architecture</h3>
+            <p>
+                Flask serves templates and route logic, SQLite stores users/attempts/otps,
+                SMTP handles verification and OTP delivery, and reCAPTCHA filters bot traffic.
+            </p>
+        </article>
+        <article class="lift-card">
+            <h3>Authentication Flow</h3>
+            <p>
+                Register -> email verification -> login (captcha + password) -> OTP check ->
+                dashboard access. Failed passwords increment counters and lock after 5 attempts.
+            </p>
+        </article>
+        <article class="lift-card">
+            <h3>Recovery Flow</h3>
+            <p>
+                Locked users request unlock OTP, verify within 5 minutes, then lock and
+                failed-attempt counters are reset.
+            </p>
+        </article>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Component</th>
+                    <th>Implementation</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Passwords</td>
+                    <td>Bcrypt</td>
+                    <td>Stores irreversible password hashes</td>
+                </tr>
+                <tr>
+                    <td>Form safety</td>
+                    <td>Flask-WTF CSRF</td>
+                    <td>Blocks cross-site request forgery</td>
+                </tr>
+                <tr>
+                    <td>Bot checks</td>
+                    <td>reCAPTCHA v2</td>
+                    <td>Reduces automated abuse on auth forms</td>
+                </tr>
+                <tr>
+                    <td>Rate limits</td>
+                    <td>Flask-Limiter</td>
+                    <td>Slows brute-force traffic by IP</td>
+                </tr>
+                <tr>
+                    <td>MFA</td>
+                    <td>Email OTP</td>
+                    <td>Adds second factor after password match</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn-row" style="margin-top: 18px;">
+        <a href="{{ url_for('home') }}" class="btn btn-dark">Back to Home</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Open Dashboard</a>
+    </div>
+</section>
+
+<style>
+    .explanation-page {
+        position: relative;
+        perspective: 1000px;
+    }
+
+    .explain-header p {
+        margin-top: 0;
+        color: var(--muted);
+        line-height: 1.6;
+    }
+
+    .stack-3d {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+    }
+
+    .lift-card {
+        border: 1px solid rgba(144, 173, 255, 0.28);
+        border-radius: 14px;
+        padding: 14px;
+        background: linear-gradient(165deg, rgba(18, 30, 69, 0.86), rgba(12, 20, 49, 0.72));
+        transform: translateZ(0) rotateX(0) rotateY(0);
+        transform-style: preserve-3d;
+        transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+        box-shadow: 0 10px 24px rgba(5, 11, 32, 0.35);
+    }
+
+    .lift-card:hover {
+        transform: translateY(-3px) rotateX(2deg) rotateY(-2deg);
+        border-color: rgba(110, 231, 255, 0.5);
+        box-shadow: 0 16px 28px rgba(8, 17, 46, 0.48);
+    }
+
+    .lift-card h3 {
+        margin: 0 0 8px;
+        color: #cde0ff;
+    }
+
+    .lift-card p {
+        margin: 0;
+        color: var(--muted);
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+    }
+
+    .table-wrap table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table-wrap th,
+    .table-wrap td {
+        text-align: left;
+        padding: 10px;
+        border-bottom: 1px solid rgba(143, 170, 255, 0.22);
+    }
+
+    .table-wrap th {
+        color: #d8e4ff;
+    }
+
+    .table-wrap td {
+        color: #c4d4ff;
+    }
+</style>
+{% endblock %}
