@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: ethical-hacking-login
+    runtime: python
+    pythonVersion: 3.11
+    
+    # Build configuration
+    buildCommand: pip install -r requirements.txt
+    
+    # Start command - use gunicorn for production
+    startCommand: gunicorn --workers 4 --worker-class sync --bind 0.0.0.0:$PORT --timeout 120 app:app
+    
+    # Environment variables
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DEV_MODE
+        value: false
+      - key: FLASK_ENV
+        value: production
+    
+    # Disk configuration for persistent database
+    disk:
+      name: sqlite-db
+      mountPath: /var/data
+      sizeGB: 1

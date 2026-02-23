@@ -146,13 +146,43 @@ Complete end-to-end technical documentation is available in:
 
 (Generated via Word MCP and includes architecture, route mapping, security review, QA checklist, and embedded screenshots.)
 
+## Deployment
+
+### Render Deployment (Recommended)
+
+This application is optimized for deployment on Render. Follow the detailed guide in RENDER_DEPLOYMENT.md for step-by-step instructions.
+
+**Key features for Render:**
+- Automatic database persistence using Render disk feature
+- Environment variable management
+- Automatic HTTPS
+- Free tier available for testing
+
+### Other Platforms
+
+For deployment on other platforms (Heroku, Railway, etc.), ensure:
+- Database persistence is configured
+- All environment variables are set
+- WSGI server (Gunicorn) is used in production
+- HTTPS is enforced
+
 ## Important Notes
 
 - This project is for **ethical/security learning and controlled environments**.
 - For production use, implement:
-  - password hashing (bcrypt/argon2)
-  - signed/expiring verification tokens
-  - OTP expiration + one-time invalidation
-  - CSRF protection
-  - secure cookie/session settings
-  - production WSGI deployment and HTTPS
+  - password hashing (bcrypt/argon2) - Already implemented
+  - signed/expiring verification tokens - Already implemented
+  - OTP expiration + one-time invalidation - Already implemented
+  - CSRF protection - Already implemented
+  - secure cookie/session settings - Already implemented
+  - production WSGI deployment and HTTPS - Configured for Render
+
+## Recent Fixes (v2.0)
+
+- Added render.yaml for Render deployment configuration
+- Added Procfile for alternative deployment platforms
+- Fixed database path to use persistent storage on Render
+- Updated .env.example with correct variable names
+- Added comprehensive RENDER_DEPLOYMENT.md guide
+- Configured Gunicorn for production WSGI deployment
+- Added environment detection for database path selection
