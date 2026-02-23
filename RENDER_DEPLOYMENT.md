@@ -60,11 +60,13 @@ RECAPTCHA_SITE_KEY=<your-recaptcha-site-key>
 RECAPTCHA_SECRET_KEY=<your-recaptcha-secret-key>
 ```
 
-## Step 4: Configure Persistent Disk (Important!)
+## Step 4: Configure Persistent Disk (Paid Tier Only)
 
-The database needs persistent storage to survive deployments:
+**For Free Tier:** Skip this step. Your database will be stored in shared ephemeral space and reset on redeploy or after 15 minutes of inactivity.
 
-1. In Render dashboard → Your Service → Disks
+**For Paid Tier:** The database needs persistent storage to survive deployments:
+
+1. In Render dashboard, go to your service → Disks
 2. Click "Create Disk"
 3. Configure:
    - **Name**: `sqlite-db`

@@ -79,16 +79,14 @@ limiter = Limiter(
 
 # Database setup
 def get_db_path():
-    # Use persistent disk on Render (/var/data), or local directory for development
-    if os.environ.get('RENDER') == 'true':
-        # Render provides persistent disk at /var/data
-        db_dir = '/var/data'
-        os.makedirs(db_dir, exist_ok=True)
-        return os.path.join(db_dir, 'users.db')
-    else:
-        # Development: use local directory
-        basedir = os.path.abspath(os.path.dirname(__file__))
-        return os.path.join(basedir, 'users.db')
+    # For Render free tier: use shared ephemeral filesystem
+    # For local development: use application directory
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    db_path = os.path.join(basedir, 'users.db')
+    
+    # Ensure directory exists
+    os.makedirs(basedir, exist_ok=True)
+    return db_path
 
 def init_db():
     """

@@ -19,8 +19,7 @@ services:
       - key: FLASK_ENV
         value: production
     
-    # Disk configuration for persistent database
-    disk:
-      name: sqlite-db
-      mountPath: /var/data
-      sizeGB: 1
+    # Free tier configuration
+    # Database is stored in shared ephemeral filesystem
+    # Database will reset on service redeploy or after 15 minutes of inactivity
+    # For persistent storage, upgrade to paid tier

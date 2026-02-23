@@ -1,9 +1,15 @@
-# Quick Start: Deploy to Render in 5 Minutes
+# Quick Start: Deploy to Render Free Tier in 5 Minutes
 
 ## Prerequisites
 - GitHub account with this repository
-- Render account (https://render.com)
+- Render account (https://render.com) - FREE TIER
 - Gmail account with App Password
+
+## Important Note: Free Tier Limitations
+- Database resets on service redeploy
+- Service spins down after 15 minutes of inactivity
+- Shared ephemeral filesystem (no persistent storage)
+- Perfect for testing and development!
 
 ## Step 1: Get Your Credentials (2 min)
 
@@ -48,16 +54,7 @@ RECAPTCHA_SITE_KEY=<your-site-key>
 RECAPTCHA_SECRET_KEY=<your-secret-key>
 ```
 
-## Step 4: Create Persistent Disk (1 min)
-
-1. In Render dashboard → Your Service → Disks
-2. Click "Create Disk"
-3. Configure:
-   - **Name**: `sqlite-db`
-   - **Mount Path**: `/var/data`
-   - **Size**: 1 GB
-
-## Step 5: Deploy! (Click Deploy)
+## Step 4: Deploy! (Click Deploy)
 
 Your app will be live at: `https://<service-name>.onrender.com`
 
@@ -66,5 +63,36 @@ Your app will be live at: `https://<service-name>.onrender.com`
 - Register: `https://<service-name>.onrender.com/register`
 - Login: `https://<service-name>.onrender.com/login`
 
-## Issues?
-See `RENDER_DEPLOYMENT.md` for detailed troubleshooting.
+## Important: Free Tier Behavior
+
+**Database Reset:**
+- Database resets when you redeploy
+- Database resets after 15 minutes of inactivity (service spins down)
+- This is normal for free tier - perfect for testing!
+
+**For Production with Persistent Storage:**
+- Upgrade to Render's paid tier
+- Add persistent disk configuration
+- See RENDER_DEPLOYMENT.md for paid tier setup
+
+## Troubleshooting
+
+### Service Won't Start
+- Check logs in Render dashboard
+- Verify all environment variables are set
+- Ensure requirements.txt has all dependencies
+
+### Email Not Sending
+- Verify Gmail App Password (not regular password)
+- Check Render logs for SMTP errors
+
+### reCAPTCHA Issues
+- Add `*.onrender.com` to reCAPTCHA domains
+- Verify keys are correct
+
+## Next Steps
+
+For more details, see:
+- RENDER_DEPLOYMENT.md - Full guide with paid tier options
+- FIXES_SUMMARY.md - Technical details
+- README.md - Project overview
