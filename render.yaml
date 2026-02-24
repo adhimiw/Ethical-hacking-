@@ -8,7 +8,9 @@ services:
     buildCommand: pip install -r requirements.txt
     
     # Start command - use gunicorn for production
-    startCommand: gunicorn --workers 4 --worker-class sync --bind 0.0.0.0:$PORT --timeout 120 app:app
+    # --preload ensures app code is loaded before forking (catches import errors early)
+    # --timeout 30 matches Render's default, prevents long-hanging SMTP connections
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 30 --preload app:app
     
     # Environment variables
     envVars:

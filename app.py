@@ -17,6 +17,9 @@ import requests
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import logging
+import socket
+# Set global socket timeout to prevent SMTP hangs on Render's network
+socket.setdefaulttimeout(10)
 load_dotenv()
 
 # Initialize Flask app
@@ -161,13 +164,21 @@ def send_email(to, subject, body):
     Handles secure email delivery via SMTP.
     Returns True if successful, False otherwise.
     Does NOT crash the application if email fails.
+    NOTE: On Render free tier, outbound SMTP to Gmail is often blocked.
+    This function gracefully handles all network failures.
     """
     print(f"\n📧 SENDING EMAIL to {to} | Subject: {subject}")
     
     # Check if email credentials are configured
     if not EMAIL_APP_PASSWORD or EMAIL_APP_PASSWORD.strip() == '':
         print(f"⚠️  Email not configured (missing EMAIL_APP_PASSWORD). Skipping email send.")
-        print(f"   User should verify their account manually or via admin panel.")
+        return False
+    
+    # Render free tier often blocks outbound SMTP - don't even try if network is restricted
+    import os
+    if os.environ.get('RENDER') or os.environ.get('RENDER_SERVICE_NAME'):
+        print(f"⚠️  Running on Render - SMTP is likely blocked. Skipping email send.")
+        print(f"   User registered but will need manual verification or use demo login.")
         return False
     
     try:
@@ -175,7 +186,7 @@ def send_email(to, subject, body):
         msg['Subject'] = subject
         msg['From'] = EMAIL_FROM
         msg['To'] = to
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as server:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=5) as server:
             server.starttls()
             server.login(EMAIL_USER, EMAIL_APP_PASSWORD)
             server.send_message(msg)
@@ -183,19 +194,19 @@ def send_email(to, subject, body):
         return True
     except smtplib.SMTPAuthenticationError as e:
         print(f"❌ Email authentication error: {e}")
-        print(f"   Check EMAIL_USER and EMAIL_APP_PASSWORD environment variables.")
         return False
     except smtplib.SMTPException as e:
         print(f"❌ SMTP error: {e}")
         return False
-    except TimeoutError as e:
-        print(f"❌ Email timeout: {e}")
+    except (TimeoutError, OSError, ConnectionError) as e:
+        print(f"❌ Email network error (expected on Render): {type(e).__name__}")
         return False
-    except OSError as e:
-        print(f"❌ Email network error: {e}")
+    except SystemExit:
+        # Gunicorn kills worker on timeout - catch this to prevent crash
+        print(f"❌ Email worker killed by timeout - network blocked")
         return False
     except Exception as e:
-        print(f"❌ Email send error: {e}")
+        print(f"❌ Email send error: {type(e).__name__}: {e}")
         return False
 
 # Generate OTP (Cryptographically unpredictable code)
