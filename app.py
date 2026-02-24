@@ -161,6 +161,7 @@ EMAIL_USER = os.environ.get('EMAIL_USER', 'adhithanraja6@gmail.com')
 EMAIL_APP_PASSWORD = os.environ.get('EMAIL_APP_PASSWORD', '')
 EMAIL_FROM = os.environ.get('EMAIL_FROM', f'Adhithan Raja <{EMAIL_USER}>')
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+RESEND_FROM = os.environ.get('RESEND_FROM', 'onboarding@resend.dev')  # Resend's default domain (no DNS needed)
 
 def send_email(to, subject, body):
     """
@@ -181,8 +182,15 @@ def send_email(to, subject, body):
             import resend
             resend.api_key = RESEND_API_KEY
             
+            # Use Resend's default domain (no DNS verification needed)
+            # Resend free tier: use onboarding@resend.dev or any @resend.dev address
+            resend_from = os.environ.get('RESEND_FROM', 'onboarding@resend.dev')
+            # Personalize the display name
+            sender_name = EMAIL_FROM.split('<')[0].strip() if '<' in EMAIL_FROM else 'Ethical Hacking App'
+            from_address = f"{sender_name} <{resend_from}>"
+            
             params = {
-                "from": EMAIL_FROM,
+                "from": from_address,
                 "to": [to],
                 "subject": subject,
                 "html": f"<p>{body.replace(chr(10), '<br>')}</p>",
