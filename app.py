@@ -161,7 +161,6 @@ EMAIL_USER = os.environ.get('EMAIL_USER', 'adhithanraja6@gmail.com')
 EMAIL_APP_PASSWORD = os.environ.get('EMAIL_APP_PASSWORD', '')
 EMAIL_FROM = os.environ.get('EMAIL_FROM', f'Adhithan Raja <{EMAIL_USER}>')
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
-RESEND_FROM = os.environ.get('RESEND_FROM', 'onboarding@resend.dev')  # Resend's default domain (no DNS needed)
 
 def send_email(to, subject, body):
     """
@@ -172,13 +171,9 @@ def send_email(to, subject, body):
     Does NOT crash the application if email fails.
     """
     print(f"\n📧 SENDING EMAIL to {to} | Subject: {subject}")
-    print(f"   RESEND_API_KEY: {'Set' if RESEND_API_KEY else 'Not set'} ({len(RESEND_API_KEY) if RESEND_API_KEY else 0} chars)")
-    print(f"   EMAIL_FROM: {EMAIL_FROM}")
-    print(f"   RESEND_FROM: {RESEND_FROM}")
     
     import os
     on_render = bool(os.environ.get('RENDER') or os.environ.get('RENDER_SERVICE_NAME'))
-    print(f"   On Render: {on_render}")
     
     # Priority 1: Use Resend API if key is configured (works on Render via HTTPS)
     if RESEND_API_KEY and RESEND_API_KEY.strip():
@@ -187,11 +182,9 @@ def send_email(to, subject, body):
             resend.api_key = RESEND_API_KEY
             
             # Use Resend's default domain (no DNS verification needed)
-            # Resend free tier: use onboarding@resend.dev or any @resend.dev address
-            resend_from = os.environ.get('RESEND_FROM', 'onboarding@resend.dev')
-            # Personalize the display name
+            # Resend free tier: use onboarding@resend.dev
             sender_name = EMAIL_FROM.split('<')[0].strip() if '<' in EMAIL_FROM else 'Ethical Hacking App'
-            from_address = f"{sender_name} <{resend_from}>"
+            from_address = f"{sender_name} <onboarding@resend.dev>"
             
             params = {
                 "from": from_address,
@@ -204,13 +197,10 @@ def send_email(to, subject, body):
             print(f"✅ Email sent via Resend API: {response.get('id', 'ok')}")
             return True
         except Exception as e:
-            import traceback
             print(f"❌ Resend API error: {type(e).__name__}: {e}")
-            print(f"   Error details: {getattr(e, 'response', 'no response attr')}")
-            traceback.print_exc()
             # Fall through to SMTP fallback if not on Render
             if on_render:
-                print("⚠️  Resend failed, and SMTP is blocked on Render. Email not sent.")
+                print("⚠️  Resend failed (likely free tier restriction), and SMTP is blocked. Email not sent.")
                 return False
     
     # Priority 2: SMTP for local dev (Gmail, etc.) - blocked on Render
@@ -305,15 +295,18 @@ def register():
         if email_sent:
             c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', (email, hashed_password, 0))
             flash('Registration successful! Please check your email to verify your account before logging in.')
-        # On Render without Resend: auto-verify since SMTP is blocked
-        elif on_render and not has_resend:
+        # Email failed on Render: auto-verify since email is restricted (free tier)
+        elif on_render:
             c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', (email, hashed_password, 1))
             flash('Registration successful! Your account is verified and ready to use. Please log in.')
-            flash('Note: Add RESEND_API_KEY to your environment variables to enable email verification.')
-        # Email failed (but may have Resend configured with issues)
+            if has_resend:
+                flash('Note: Resend free tier only sends to your verified email. Email verification skipped for this user.')
+            else:
+                flash('Note: Add RESEND_API_KEY to enable email features.')
+        # Email failed locally - require manual verification
         else:
             c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', (email, hashed_password, 0))
-            flash('Registration successful! Email verification could not be sent. Please contact support or check your RESEND_API_KEY.')
+            flash('Registration successful! Email verification could not be sent. Please contact support.')
         
         conn.commit()
         conn.close()
