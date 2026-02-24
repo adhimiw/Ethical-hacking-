@@ -259,14 +259,26 @@ def register():
             body=f'Your secure registration is almost complete. Click here to verify your email (link expires in 30 mins): {verification_link}'
         )
 
-        c.execute('INSERT INTO users (email, password) VALUES (?, ?)', (email, hashed_password))
+        # Check if we're on Render (where SMTP is blocked)
+        import os
+        on_render = bool(os.environ.get('RENDER') or os.environ.get('RENDER_SERVICE_NAME'))
+        
+        # On Render, auto-verify user since email can't be sent; elsewhere, require email verification
+        if email_sent:
+            # Email sent successfully - user needs to verify via email link
+            c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', (email, hashed_password, 0))
+            flash('Registration successful! Please check your email to verify your account before logging in.')
+        elif on_render:
+            # On Render, email blocked - auto-verify so user can login immediately
+            c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', (email, hashed_password, 1))
+            flash('Registration successful! Your account is verified and ready to use. Please log in.')
+        else:
+            # Email failed for other reasons - still require verification
+            c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', (email, hashed_password, 0))
+            flash('Registration successful! Email verification could not be sent. Please contact support or try logging in later.')
+        
         conn.commit()
         conn.close()
-
-        if email_sent:
-            flash('Registration successful! Please check your email to verify your account before logging in.')
-        else:
-            flash('Registration successful! Email verification could not be sent. Please contact support.')
         return redirect(url_for('login'))
 
     return render_template('register.html')
