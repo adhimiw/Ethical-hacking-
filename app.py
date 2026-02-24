@@ -156,60 +156,55 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Email setup (SendGrid API for Render, SMTP for local dev)
+# Email setup (Resend SMTP for Render, Gmail SMTP for local dev)
 EMAIL_USER = os.environ.get('EMAIL_USER', 'adhithanraja6@gmail.com')
 EMAIL_APP_PASSWORD = os.environ.get('EMAIL_APP_PASSWORD', '')
 EMAIL_FROM = os.environ.get('EMAIL_FROM', f'Adhithan Raja <{EMAIL_USER}>')
-SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY', '')
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 
 def send_email(to, subject, body):
     """
-    Handles secure email delivery.
-    - Uses SendGrid API (HTTPS/443) on Render (SMTP port 587 is blocked)
-    - SendGrid free tier: 100 emails/day to ANY recipient
-    - Falls back to SMTP for local development
+    Handles secure email delivery via SMTP.
+    - On Render: Uses Resend SMTP on port 2465 (non-standard port, not blocked by Render)
+      Render blocks standard SMTP ports 25/465/587, but 2465/2587 are allowed.
+    - Locally: Uses Gmail SMTP on port 587
     """
     print(f"\n📧 SENDING EMAIL to {to} | Subject: {subject}")
     
     import os
+    import ssl
     on_render = bool(os.environ.get('RENDER') or os.environ.get('RENDER_SERVICE_NAME'))
     
-    # Priority 1: SendGrid API (works on Render via HTTPS, sends to any recipient)
-    if SENDGRID_API_KEY and SENDGRID_API_KEY.strip():
+    # Priority 1: Resend SMTP via port 2465 (works on Render - non-standard port not blocked)
+    if RESEND_API_KEY and RESEND_API_KEY.strip():
         try:
-            response = requests.post(
-                'https://api.sendgrid.com/v3/mail/send',
-                headers={
-                    'Authorization': f'Bearer {SENDGRID_API_KEY}',
-                    'Content-Type': 'application/json',
-                },
-                json={
-                    'personalizations': [{'to': [{'email': to}]}],
-                    'from': {'email': EMAIL_USER, 'name': EMAIL_FROM.split('<')[0].strip() if '<' in EMAIL_FROM else 'Ethical Hacking App'},
-                    'subject': subject,
-                    'content': [{'type': 'text/html', 'value': f'<p>{body}</p>'}],
-                },
-                timeout=10,
-            )
-            if response.status_code in [200, 202]:
-                print(f"✅ Email sent via SendGrid API (status {response.status_code})")
-                return True
-            else:
-                print(f"❌ SendGrid error: {response.status_code} - {response.text}")
-                if on_render:
-                    return False
+            sender_name = EMAIL_FROM.split('<')[0].strip() if '<' in EMAIL_FROM else 'Ethical Hacking App'
+            from_address = f"{sender_name} <onboarding@resend.dev>"
+            
+            msg = MIMEText(body)
+            msg['Subject'] = subject
+            msg['From'] = from_address
+            msg['To'] = to
+            
+            # Port 2465 = SMTPS (SSL from start) - not blocked by Render
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL('smtp.resend.com', 2465, timeout=10, context=context) as server:
+                server.login('resend', RESEND_API_KEY)
+                server.send_message(msg)
+            print(f"✅ Email sent via Resend SMTP (port 2465)")
+            return True
         except Exception as e:
-            print(f"❌ SendGrid error: {type(e).__name__}: {e}")
+            print(f"❌ Resend SMTP error: {type(e).__name__}: {e}")
             if on_render:
                 return False
     
-    # Priority 2: SMTP for local dev (Gmail, etc.) - blocked on Render
+    # Priority 2: Gmail SMTP for local dev (port 587 - blocked on Render)
     if not EMAIL_APP_PASSWORD or EMAIL_APP_PASSWORD.strip() == '':
-        print(f"⚠️  Email not configured (set SENDGRID_API_KEY for Render or EMAIL_APP_PASSWORD for local).")
+        print(f"⚠️  Email not configured (set RESEND_API_KEY for Render or EMAIL_APP_PASSWORD for local).")
         return False
     
     if on_render:
-        print(f"⚠️  On Render: SMTP port 587 is blocked. Set SENDGRID_API_KEY instead.")
+        print(f"⚠️  On Render: Gmail SMTP port 587 is blocked. Set RESEND_API_KEY instead.")
         return False
     
     try:
@@ -221,7 +216,7 @@ def send_email(to, subject, body):
             server.starttls()
             server.login(EMAIL_USER, EMAIL_APP_PASSWORD)
             server.send_message(msg)
-        print(f"✅ Email sent via SMTP.")
+        print(f"✅ Email sent via Gmail SMTP.")
         return True
     except smtplib.SMTPAuthenticationError as e:
         print(f"❌ SMTP auth error: {e}")
@@ -289,7 +284,7 @@ def register():
         # Check environment and email configuration
         import os
         on_render = bool(os.environ.get('RENDER') or os.environ.get('RENDER_SERVICE_NAME'))
-        has_sendgrid = bool(SENDGRID_API_KEY and SENDGRID_API_KEY.strip())
+        has_resend = bool(RESEND_API_KEY and RESEND_API_KEY.strip())
         
         if email_sent:
             c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', (email, hashed_password, 0))
@@ -297,8 +292,8 @@ def register():
         elif on_render:
             c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', (email, hashed_password, 1))
             flash('Registration successful! Your account is verified and ready to use. Please log in.')
-            if not has_sendgrid:
-                flash('Note: Add SENDGRID_API_KEY to enable email verification.')
+            if not has_resend:
+                flash('Note: Add RESEND_API_KEY to enable email verification.')
         else:
             c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', (email, hashed_password, 0))
             flash('Registration successful! Email verification could not be sent. Please contact support.')
