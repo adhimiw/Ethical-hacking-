@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ error }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="app-shell">
+        <div class="auth-layout">
+            <section class="panel" style="text-align:center; max-width:500px; margin:60px auto;">
+                <h2 class="form-title">{{ error }}</h2>
+                <p style="margin:16px 0;">{{ message }}</p>
+                <div class="btn-row" style="margin-top:24px; justify-content:center;">
+                    <a href="/" class="link-subtle">Back to Home</a>
+                    <a href="/login" class="link-subtle">Login</a>
+                    <a href="/register" class="link-subtle">Register</a>
+                </div>
+            </section>
+        </div>
+    </main>
+</body>
+</html>

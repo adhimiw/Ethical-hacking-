@@ -16,6 +16,7 @@ import os
 import requests
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+import logging
 load_dotenv()
 
 # Initialize Flask app
@@ -42,8 +43,21 @@ DEV_MODE = app.config['DEV_MODE']
 
 if not DEV_MODE:
     app.config.update(
-        SESSION_COOKIE_SECURE=True, # Ensure cookies are only sent over HTTPS in production
+        SESSION_COOKIE_SECURE=True,
     )
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+
+@app.errorhandler(500)
+def internal_error(error):
+    app.logger.error(f'Server Error: {error}')
+    return render_template('error.html', error='Internal Server Error', message='Something went wrong. Please try again.'), 500
+
+@app.errorhandler(400)
+def bad_request(error):
+    app.logger.warning(f'Bad Request: {error}')
+    return render_template('error.html', error='Bad Request', message='The request could not be processed. Please go back and try again.'), 400
 
 def verify_recaptcha():
     """
@@ -161,8 +175,8 @@ def send_email(to, subject, body):
         msg['Subject'] = subject
         msg['From'] = EMAIL_FROM
         msg['To'] = to
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
-            server.starttls() # Secure encryption for the email session
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as server:
+            server.starttls()
             server.login(EMAIL_USER, EMAIL_APP_PASSWORD)
             server.send_message(msg)
         print(f"✅ Email sent successfully.")
@@ -173,6 +187,12 @@ def send_email(to, subject, body):
         return False
     except smtplib.SMTPException as e:
         print(f"❌ SMTP error: {e}")
+        return False
+    except TimeoutError as e:
+        print(f"❌ Email timeout: {e}")
+        return False
+    except OSError as e:
+        print(f"❌ Email network error: {e}")
         return False
     except Exception as e:
         print(f"❌ Email send error: {e}")
