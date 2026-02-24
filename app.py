@@ -172,9 +172,13 @@ def send_email(to, subject, body):
     Does NOT crash the application if email fails.
     """
     print(f"\n📧 SENDING EMAIL to {to} | Subject: {subject}")
+    print(f"   RESEND_API_KEY: {'Set' if RESEND_API_KEY else 'Not set'} ({len(RESEND_API_KEY) if RESEND_API_KEY else 0} chars)")
+    print(f"   EMAIL_FROM: {EMAIL_FROM}")
+    print(f"   RESEND_FROM: {RESEND_FROM}")
     
     import os
     on_render = bool(os.environ.get('RENDER') or os.environ.get('RENDER_SERVICE_NAME'))
+    print(f"   On Render: {on_render}")
     
     # Priority 1: Use Resend API if key is configured (works on Render via HTTPS)
     if RESEND_API_KEY and RESEND_API_KEY.strip():
@@ -200,7 +204,10 @@ def send_email(to, subject, body):
             print(f"✅ Email sent via Resend API: {response.get('id', 'ok')}")
             return True
         except Exception as e:
+            import traceback
             print(f"❌ Resend API error: {type(e).__name__}: {e}")
+            print(f"   Error details: {getattr(e, 'response', 'no response attr')}")
+            traceback.print_exc()
             # Fall through to SMTP fallback if not on Render
             if on_render:
                 print("⚠️  Resend failed, and SMTP is blocked on Render. Email not sent.")
