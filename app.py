@@ -154,31 +154,55 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Email setup (SMTP for Verification and OTP)
+# Email setup (SMTP for local dev, Resend API for Render)
 EMAIL_USER = os.environ.get('EMAIL_USER', 'adhithanraja6@gmail.com')
 EMAIL_APP_PASSWORD = os.environ.get('EMAIL_APP_PASSWORD', '')
 EMAIL_FROM = os.environ.get('EMAIL_FROM', f'Adhithan Raja <{EMAIL_USER}>')
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 
 def send_email(to, subject, body):
     """
-    Handles secure email delivery via SMTP.
+    Handles secure email delivery.
+    - Uses Resend API (HTTPS/443) on Render (SMTP port 587 is blocked)
+    - Falls back to SMTP for local development
     Returns True if successful, False otherwise.
     Does NOT crash the application if email fails.
-    NOTE: On Render free tier, outbound SMTP to Gmail is often blocked.
-    This function gracefully handles all network failures.
     """
     print(f"\n📧 SENDING EMAIL to {to} | Subject: {subject}")
     
-    # Check if email credentials are configured
+    import os
+    on_render = bool(os.environ.get('RENDER') or os.environ.get('RENDER_SERVICE_NAME'))
+    
+    # Priority 1: Use Resend API if key is configured (works on Render via HTTPS)
+    if RESEND_API_KEY and RESEND_API_KEY.strip():
+        try:
+            import resend
+            resend.api_key = RESEND_API_KEY
+            
+            params = {
+                "from": EMAIL_FROM,
+                "to": [to],
+                "subject": subject,
+                "html": f"<p>{body.replace(chr(10), '<br>')}</p>",
+            }
+            
+            response = resend.Emails.send(params)
+            print(f"✅ Email sent via Resend API: {response.get('id', 'ok')}")
+            return True
+        except Exception as e:
+            print(f"❌ Resend API error: {type(e).__name__}: {e}")
+            # Fall through to SMTP fallback if not on Render
+            if on_render:
+                print("⚠️  Resend failed, and SMTP is blocked on Render. Email not sent.")
+                return False
+    
+    # Priority 2: SMTP for local dev (Gmail, etc.) - blocked on Render
     if not EMAIL_APP_PASSWORD or EMAIL_APP_PASSWORD.strip() == '':
-        print(f"⚠️  Email not configured (missing EMAIL_APP_PASSWORD). Skipping email send.")
+        print(f"⚠️  Email not configured (missing EMAIL_APP_PASSWORD or RESEND_API_KEY).")
         return False
     
-    # Render free tier often blocks outbound SMTP - don't even try if network is restricted
-    import os
-    if os.environ.get('RENDER') or os.environ.get('RENDER_SERVICE_NAME'):
-        print(f"⚠️  Running on Render - SMTP is likely blocked. Skipping email send.")
-        print(f"   User registered but will need manual verification or use demo login.")
+    if on_render:
+        print(f"⚠️  On Render: SMTP port 587 is blocked. Use RESEND_API_KEY instead.")
         return False
     
     try:
@@ -190,20 +214,16 @@ def send_email(to, subject, body):
             server.starttls()
             server.login(EMAIL_USER, EMAIL_APP_PASSWORD)
             server.send_message(msg)
-        print(f"✅ Email sent successfully.")
+        print(f"✅ Email sent via SMTP.")
         return True
     except smtplib.SMTPAuthenticationError as e:
-        print(f"❌ Email authentication error: {e}")
+        print(f"❌ SMTP auth error: {e}")
         return False
     except smtplib.SMTPException as e:
         print(f"❌ SMTP error: {e}")
         return False
     except (TimeoutError, OSError, ConnectionError) as e:
-        print(f"❌ Email network error (expected on Render): {type(e).__name__}")
-        return False
-    except SystemExit:
-        # Gunicorn kills worker on timeout - catch this to prevent crash
-        print(f"❌ Email worker killed by timeout - network blocked")
+        print(f"❌ SMTP network error: {type(e).__name__}")
         return False
     except Exception as e:
         print(f"❌ Email send error: {type(e).__name__}: {e}")
@@ -259,23 +279,24 @@ def register():
             body=f'Your secure registration is almost complete. Click here to verify your email (link expires in 30 mins): {verification_link}'
         )
 
-        # Check if we're on Render (where SMTP is blocked)
+        # Check environment and email configuration
         import os
         on_render = bool(os.environ.get('RENDER') or os.environ.get('RENDER_SERVICE_NAME'))
+        has_resend = bool(RESEND_API_KEY and RESEND_API_KEY.strip())
         
-        # On Render, auto-verify user since email can't be sent; elsewhere, require email verification
+        # Email sent successfully - require verification via email link
         if email_sent:
-            # Email sent successfully - user needs to verify via email link
             c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', (email, hashed_password, 0))
             flash('Registration successful! Please check your email to verify your account before logging in.')
-        elif on_render:
-            # On Render, email blocked - auto-verify so user can login immediately
+        # On Render without Resend: auto-verify since SMTP is blocked
+        elif on_render and not has_resend:
             c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', (email, hashed_password, 1))
             flash('Registration successful! Your account is verified and ready to use. Please log in.')
+            flash('Note: Add RESEND_API_KEY to your environment variables to enable email verification.')
+        # Email failed (but may have Resend configured with issues)
         else:
-            # Email failed for other reasons - still require verification
             c.execute('INSERT INTO users (email, password, verified) VALUES (?, ?, ?)', (email, hashed_password, 0))
-            flash('Registration successful! Email verification could not be sent. Please contact support or try logging in later.')
+            flash('Registration successful! Email verification could not be sent. Please contact support or check your RESEND_API_KEY.')
         
         conn.commit()
         conn.close()
