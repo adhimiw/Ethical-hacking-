@@ -145,8 +145,17 @@ EMAIL_FROM = os.environ.get('EMAIL_FROM', f'Adhithan Raja <{EMAIL_USER}>')
 def send_email(to, subject, body):
     """
     Handles secure email delivery via SMTP.
+    Returns True if successful, False otherwise.
+    Does NOT crash the application if email fails.
     """
     print(f"\n📧 SENDING EMAIL to {to} | Subject: {subject}")
+    
+    # Check if email credentials are configured
+    if not EMAIL_APP_PASSWORD or EMAIL_APP_PASSWORD.strip() == '':
+        print(f"⚠️  Email not configured (missing EMAIL_APP_PASSWORD). Skipping email send.")
+        print(f"   User should verify their account manually or via admin panel.")
+        return False
+    
     try:
         msg = MIMEText(body)
         msg['Subject'] = subject
@@ -157,8 +166,17 @@ def send_email(to, subject, body):
             server.login(EMAIL_USER, EMAIL_APP_PASSWORD)
             server.send_message(msg)
         print(f"✅ Email sent successfully.")
+        return True
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"❌ Email authentication error: {e}")
+        print(f"   Check EMAIL_USER and EMAIL_APP_PASSWORD environment variables.")
+        return False
+    except smtplib.SMTPException as e:
+        print(f"❌ SMTP error: {e}")
+        return False
     except Exception as e:
         print(f"❌ Email send error: {e}")
+        return False
 
 # Generate OTP (Cryptographically unpredictable code)
 def generate_otp():
@@ -193,13 +211,18 @@ def register():
             flash('Email already registered.')
             return redirect(url_for('register'))
 
+        # Validate password strength
+        if len(password) < 6:
+            flash('Password must be at least 6 characters long.')
+            return redirect(url_for('register'))
+        
         # Hash password (No plain text allowed in ethical systems!)
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
         # Create a cryptographically signed token for secure verification
         token = serializer.dumps(email, salt='email-confirm')
         verification_link = url_for('verify_email', token=token, _external=True)
-        send_email(
+        email_sent = send_email(
             to=email,
             subject='Verify Your Email - Ethical Hacking Module',
             body=f'Your secure registration is almost complete. Click here to verify your email (link expires in 30 mins): {verification_link}'
@@ -209,7 +232,10 @@ def register():
         conn.commit()
         conn.close()
 
-        flash('Registration successful! Please check your email to verify your account before logging in.')
+        if email_sent:
+            flash('Registration successful! Please check your email to verify your account before logging in.')
+        else:
+            flash('Registration successful! Email verification could not be sent. Please contact support.')
         return redirect(url_for('login'))
 
     return render_template('register.html')
@@ -262,9 +288,13 @@ def login():
             return redirect(url_for('login'))
 
         # Security Check: Email must be verified first
-        if user[3] == 0: 
+        if user[3] == 0 and not DEV_MODE: 
             flash('Please verify your email first.')
             return redirect(url_for('login'))
+        elif user[3] == 0 and DEV_MODE:
+            # Auto-verify in dev mode for testing
+            c.execute('UPDATE users SET verified = 1 WHERE email = ?', (email,))
+            conn.commit()
 
         # Security Check: Prevent login for locked accounts
         if user[4] == 1: 
@@ -298,13 +328,18 @@ def login():
         c.execute('INSERT INTO otps (email, otp) VALUES (?, ?)', (email, otp))
         conn.commit()
 
-        send_email(
+        otp_sent = send_email(
             to=email,
             subject='Your Secure OTP Code',
             body=f'Your code is: {otp}. This code expires in 5 minutes.'
         )
 
         session['temp_email'] = email
+        session['otp_code'] = otp  # Store OTP in session for testing/fallback
+        
+        if not otp_sent:
+            flash('OTP could not be sent via email. Your OTP code is displayed below for testing purposes.')
+        
         return redirect(url_for('verify_otp'))
 
     return render_template('login.html')

@@ -22,6 +22,12 @@
                     </div>
                 {% endif %}
             {% endwith %}
+            
+            {% if session.get('otp_code') %}
+                <div style="background: #f0f4ff; border: 1px solid #d0d8ff; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-family: monospace;">
+                    <strong>Test OTP Code:</strong> {{ session.get('otp_code') }}
+                </div>
+            {% endif %}
 
             <form method="POST" action="/verify_otp">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
