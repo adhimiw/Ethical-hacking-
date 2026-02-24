@@ -47,6 +47,8 @@ DEV_MODE = app.config['DEV_MODE']
 if not DEV_MODE:
     app.config.update(
         SESSION_COOKIE_SECURE=True,
+        WTF_CSRF_SSL_STRICT=False,  # Allow CSRF behind reverse proxy (Cloudflare/Render)
+        WTF_CSRF_TRUSTED_ORIGINS=['https://ethical-hacking.onrender.com'],
     )
     gunicorn_logger = logging.getLogger('gunicorn.error')
     app.logger.handlers = gunicorn_logger.handlers
